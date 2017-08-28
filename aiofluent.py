@@ -4,7 +4,6 @@ import socket
 import traceback
 import asyncio
 import msgpack
-import async_timeout
 __version__ = '0.1.0'
 
 
@@ -97,14 +96,17 @@ class FluentSender:
             if self.host.startswith('unix://'):
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 sock.setblocking(False)
-                with async_timeout.timeout(self.timeout):
-                    await self.loop.sock_connect(
-                            sock, self.host[len('unix://'):])
+                await asyncio.wait_for(
+                    self.loop.sock_connect(sock, self.host[len('unix://'):]),
+                    self.timeout
+                )
             else:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.setblocking(False)
-                with async_timeout.timeout(self.timeout):
-                    await self.loop.sock_connect(sock, (self.host, self.port))
+                await asyncio.wait_for(
+                    self.loop.sock_connect(sock, (self.host, self.port)),
+                    self.timeout
+                )
             self.sock = sock
 
     def _close(self):
@@ -145,8 +147,10 @@ class FluentSender:
 
     async def _send_data(self, bytes_):
         await self._reconnect()
-        with async_timeout.timeout(self.timeout):
-            await self.loop.sock_sendall(self.sock, bytes_)
+        await asyncio.wait_for(
+            self.loop.sock_sendall(self.sock, bytes_),
+            self.timeout
+        )
 
     def _call_buffer_overflow_handler(self, pendings):
         try:

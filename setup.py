@@ -16,7 +16,7 @@ with open(os.path.join(BASE_PATH, 'aiofluent.py')) as f:
 
 
 setup(
-    name='aiofluent',
+    name='aiofluent-python',
     description='A useful asynchronous library bases on aiobotocore',
     license='MIT',
     version=version,
@@ -26,7 +26,7 @@ setup(
     maintainer_email='tensiongyb@gmail.com',
     url='https://github.com/guyingbo/aiofluent',
     py_modules=['aiofluent'],
-    python_requires='>=3.6',
+    python_requires='>=3.5',
     install_requires=[
         'msgpack-python',
     ],
