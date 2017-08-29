@@ -17,7 +17,7 @@ with open(os.path.join(BASE_PATH, 'aiofluent.py')) as f:
 
 setup(
     name='aiofluent-python',
-    description='A useful asynchronous library bases on aiobotocore',
+    description='A fluentd client libary intended to work with asyncio.',
     license='MIT',
     version=version,
     author='Yingbo Gu',
