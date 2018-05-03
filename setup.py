@@ -29,6 +29,7 @@ setup(
     python_requires='>=3.5',
     install_requires=[
         'msgpack-python',
+        'async_timeout',
     ],
     classifiers=[
         'Programming Language :: Python :: 3.5',
