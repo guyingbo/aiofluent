@@ -13,9 +13,29 @@ A fluentd client libary intended to work with asyncio. Inspires by [fluent-logge
 
 - Python 3.5 or greater
 - msgpack-python
+- async-timeout
 
 ## Installation
 
 ~~~
 pip install aiofluent-python
+~~~
+
+## Example
+
+~~~python
+import asyncio
+from aiofluent import FluentSender
+loop = asyncio.get_event_loop()
+sender = FluentSender()
+
+
+async def go():
+    await sender.emit({'name': 'aiofluent'})
+    await sender.close()
+
+
+loop.run_until_complete(go())
+loop.run_until_complete(loop.shutdown_asyncgens())
+loop.close()
 ~~~
