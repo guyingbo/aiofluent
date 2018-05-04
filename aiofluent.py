@@ -5,7 +5,7 @@ import msgpack
 import asyncio
 import traceback
 import async_timeout
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 class EventTime(msgpack.ExtType):
@@ -25,7 +25,7 @@ class FluentSender(asyncio.Protocol):
                  host='localhost',
                  port=24224,
                  bufmax=1 * 1024 * 1024,
-                 timeout=3.0,
+                 timeout=5,
                  verbose=False,
                  nanosecond_precision=False,
                  loop=None):
@@ -80,7 +80,8 @@ class FluentSender(asyncio.Protocol):
 
     async def _send(self, bytes_):
         async with async_timeout.timeout(self.timeout):
-            await self._reconnect()
+            if self.transport is None:
+                await self._reconnect()
             await self.resume.wait()
             self.transport.write(bytes_)
 
