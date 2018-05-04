@@ -2,10 +2,11 @@ import time
 import socket
 import struct
 import msgpack
+import logging
 import asyncio
-import traceback
 import async_timeout
-__version__ = '0.2.1'
+__version__ = '0.2.2'
+logger = logging.getLogger(__name__)
 
 
 class EventTime(msgpack.ExtType):
@@ -49,6 +50,7 @@ class FluentSender(asyncio.Protocol):
 
     def connection_lost(self, exc):
         self.transport = None
+        self.last_error = exc
 
     def pause_writing(self):
         self.resume.clear()
@@ -58,8 +60,9 @@ class FluentSender(asyncio.Protocol):
 
     async def close(self):
         async with self.lock:
-            if self.transport:
+            if self.transport and not self.transport.is_closing():
                 self.transport.close()
+                self.transport = None
 
     async def _reconnect(self):
         async with self.lock:
@@ -79,11 +82,25 @@ class FluentSender(asyncio.Protocol):
                     )
 
     async def _send(self, bytes_):
-        async with async_timeout.timeout(self.timeout):
-            if self.transport is None:
-                await self._reconnect()
-            await self.resume.wait()
-            self.transport.write(bytes_)
+        try:
+            async with async_timeout.timeout(self.timeout):
+                while True:
+                    if self.transport is None:
+                        await self._reconnect()
+                    await self.resume.wait()
+                    if self.transport is None:
+                        continue
+                    self.transport.write(bytes_)
+                    return True
+        except socket.error as e:
+            self.last_error = e
+            logger.exception('socket error')
+            await self.close()
+            return False
+        except asyncio.TimeoutError as e:
+            self.last_error = e
+            logger.exception('timeout error')
+            return False
 
     async def emit(self, label, data):
         if self.nanosecond_precision:
@@ -94,7 +111,9 @@ class FluentSender(asyncio.Protocol):
 
     async def emit_with_time(self, label, timestamp, data):
         bytes_ = self._bytes_emit_with_time(label, timestamp, data)
-        return await self._send(bytes_)
+        if bytes_:
+            return await self._send(bytes_)
+        return False
 
     def _bytes_emit_with_time(self, label, timestamp, data):
         if (not self.tag) and (not label):
@@ -109,10 +128,12 @@ class FluentSender(asyncio.Protocol):
             bytes_ = self._make_packet(label, timestamp, data)
         except Exception as e:
             self.last_error = e
-            bytes_ = self._make_packet(label, timestamp, {
-                'level': 'CRITICAL',
-                'message': "Can't output to log",
-                'traceback': traceback.format_exc()})
+            logger.exception('make packet error')
+            return b''
+            # bytes_ = self._make_packet(label, timestamp, {
+            #     'level': 'CRITICAL',
+            #     'message': "Can't output to log",
+            #     'traceback': traceback.format_exc()})
         return bytes_
 
     def _make_packet(self, label, timestamp, data):
