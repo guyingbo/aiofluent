@@ -1,4 +1,5 @@
 import time
+import socket
 import struct
 import msgpack
 import asyncio
@@ -63,7 +64,12 @@ class FluentSender(asyncio.Protocol):
     async def _reconnect(self):
         async with self.lock:
             if self.transport is None:
-                if self.host.startswith('unix://'):
+                if self.host is None:
+                    self.server_sock, sock = socket.socketpair()
+                    await self.loop.create_connection(
+                        lambda: self, sock=sock
+                    )
+                elif self.host.startswith('unix://'):
                     await self.loop.create_unix_connection(
                         lambda: self, self.host
                     )

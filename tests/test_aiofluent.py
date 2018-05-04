@@ -1,10 +1,30 @@
 import asyncio
+import msgpack
 from aiofluent import FluentSender
-loop = asyncio.get_event_loop()
 
 
 def test_fluent():
-    sender = FluentSender()
-    loop.run_until_complete(sender.close())
+    loop = asyncio.get_event_loop()
+    sender = FluentSender('tag', host=None)
+    dic = {'name': 'test'}
+
+    async def go():
+        await sender.emit('label', dic)
+        sender.server_sock.send(b'haha')
+        data = sender.server_sock.recv(1024)
+        label, timestamp, obj = msgpack.unpackb(data, encoding='utf-8')
+        assert label == 'tag.label'
+        assert obj == dic
+
+        sender.server_sock.close()
+        await asyncio.sleep(0.1)
+        await sender.emit('label2', dic)
+        data = sender.server_sock.recv(1024)
+        label, timestamp, obj = msgpack.unpackb(data, encoding='utf-8')
+        assert label == 'tag.label2'
+        assert obj == dic
+
+        await sender.close()
+    loop.run_until_complete(go())
     loop.run_until_complete(loop.shutdown_asyncgens())
     loop.close()
