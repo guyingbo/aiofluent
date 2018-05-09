@@ -1,3 +1,4 @@
+# Warning: this module has been deprecated, please use the latest aiofluent.
 import time
 import struct
 import socket
@@ -41,6 +42,7 @@ class FluentSender:
         self.nanosecond_precision = nanosecond_precision
         self.loop = loop or asyncio.get_event_loop()
         self.lock = asyncio.Lock()
+        self.packer = msgpack.Packer()
 
     async def __aenter__(self):
         return self
@@ -118,7 +120,7 @@ class FluentSender:
         packet = (label, timestamp, data)
         if self.verbose:
             print(packet)
-        return msgpack.packb(packet)
+        return self.packer.pack(packet)
 
     async def _send(self, bytes_):
         async with self.lock:
