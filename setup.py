@@ -34,8 +34,8 @@ setup(
     py_modules=['aiofluent'],
     python_requires='>=3.5',
     install_requires=[
-        'msgpack-python',
-        'async_timeout',
+        'msgpack>=0.5.2',
+        'async_timeout>=2.0.0',
     ],
     classifiers=[
         'Programming Language :: Python :: 3.5',

@@ -5,7 +5,7 @@ import msgpack
 import logging
 import asyncio
 import async_timeout
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 logger = logging.getLogger(__name__)
 
 
@@ -101,6 +101,13 @@ class FluentSender(asyncio.Protocol):
             self.last_error = e
             logger.exception('timeout error')
             return False
+
+    def pack(self, label, data):
+        if self.nanosecond_precision:
+            cur_time = EventTime(time.time())
+        else:
+            cur_time = int(time.time())
+        return self._bytes_emit_with_time(label, cur_time, data)
 
     async def emit(self, label, data):
         if self.nanosecond_precision:
