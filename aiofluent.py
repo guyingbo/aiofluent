@@ -5,7 +5,7 @@ import msgpack
 import logging
 import asyncio
 import async_timeout
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 logger = logging.getLogger(__name__)
 
 
@@ -62,7 +62,7 @@ class FluentSender(asyncio.Protocol):
         async with self.lock:
             if self.transport and not self.transport.is_closing():
                 self.transport.close()
-                self.transport = None
+            self.transport = None
 
     async def _reconnect(self):
         async with self.lock:
@@ -100,6 +100,12 @@ class FluentSender(asyncio.Protocol):
         except asyncio.TimeoutError as e:
             self.last_error = e
             logger.exception('timeout error')
+            return False
+        except Exception as e:
+            self.last_error = e
+            logger.exception(str(e))
+            if self.transport and self.transport.is_closing():
+                self.transport = None
             return False
 
     def pack(self, label, data):
