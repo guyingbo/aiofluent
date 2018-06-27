@@ -5,7 +5,8 @@ import socket
 import traceback
 import asyncio
 import msgpack
-__version__ = '0.1.0'
+
+__version__ = "0.1.0"
 
 
 class EventTime(msgpack.ExtType):
@@ -13,23 +14,23 @@ class EventTime(msgpack.ExtType):
         seconds = int(timestamp)
         nanoseconds = int(timestamp % 1 * 10 ** 9)
         return super().__new__(
-            cls,
-            code=0,
-            data=struct.pack(">II", seconds, nanoseconds),
+            cls, code=0, data=struct.pack(">II", seconds, nanoseconds)
         )
 
 
 class FluentSender:
-    def __init__(self,
-                 tag=None,
-                 host='localhost',
-                 port=24224,
-                 bufmax=1 * 1024 * 1024,
-                 timeout=3.0,
-                 verbose=False,
-                 buffer_overflow_handler=None,
-                 nanosecond_precision=False,
-                 loop=None):
+    def __init__(
+        self,
+        tag=None,
+        host="localhost",
+        port=24224,
+        bufmax=1 * 1024 * 1024,
+        timeout=3.0,
+        verbose=False,
+        buffer_overflow_handler=None,
+        nanosecond_precision=False,
+        loop=None,
+    ):
         self.tag = tag
         self.sock = None
         self.pendings = None
@@ -66,9 +67,9 @@ class FluentSender:
 
     def _bytes_emit_with_time(self, label, timestamp, data):
         if (not self.tag) and (not label):
-            raise ValueError('tag or label must be set')
+            raise ValueError("tag or label must be set")
         if self.tag and label:
-            label = self.tag + '.' + label
+            label = self.tag + "." + label
         elif self.tag:
             label = self.tag
         if self.nanosecond_precision and isinstance(timestamp, float):
@@ -77,10 +78,15 @@ class FluentSender:
             bytes_ = self._make_packet(label, timestamp, data)
         except Exception as e:
             self.last_error = e
-            bytes_ = self._make_packet(label, timestamp, {
-                'level': 'CRITICAL',
-                'message': "Can't output to log",
-                'traceback': traceback.format_exc()})
+            bytes_ = self._make_packet(
+                label,
+                timestamp,
+                {
+                    "level": "CRITICAL",
+                    "message": "Can't output to log",
+                    "traceback": traceback.format_exc(),
+                },
+            )
         return bytes_
 
     async def close(self):
@@ -95,19 +101,18 @@ class FluentSender:
 
     async def _reconnect(self):
         if not self.sock:
-            if self.host.startswith('unix://'):
+            if self.host.startswith("unix://"):
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 sock.setblocking(False)
                 await asyncio.wait_for(
-                    self.loop.sock_connect(sock, self.host[len('unix://'):]),
-                    self.timeout
+                    self.loop.sock_connect(sock, self.host[len("unix://") :]),
+                    self.timeout,
                 )
             else:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.setblocking(False)
                 await asyncio.wait_for(
-                    self.loop.sock_connect(sock, (self.host, self.port)),
-                    self.timeout
+                    self.loop.sock_connect(sock, (self.host, self.port)), self.timeout
                 )
             self.sock = sock
 
@@ -149,10 +154,7 @@ class FluentSender:
 
     async def _send_data(self, bytes_):
         await self._reconnect()
-        await asyncio.wait_for(
-            self.loop.sock_sendall(self.sock, bytes_),
-            self.timeout
-        )
+        await asyncio.wait_for(self.loop.sock_sendall(self.sock, bytes_), self.timeout)
 
     def _call_buffer_overflow_handler(self, pendings):
         try:
