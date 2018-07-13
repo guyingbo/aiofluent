@@ -1,0 +1,7 @@
+[run]
+source = aiofluent
+
+[report]
+include =
+    aiofluent.py
+    tests/*.py

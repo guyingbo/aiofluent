@@ -36,11 +36,12 @@ setup(
     python_requires=">=3.5",
     install_requires=["msgpack>=0.5.2", "async_timeout>=2.0.0"],
     classifiers=[
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Intended Audience :: Developers",
     ],
     setup_requires=["pytest-runner"],
-    tests_require=["pytest"],
+    tests_require=["pytest", "coverage", "pytest-cov"],
 )

@@ -5,6 +5,7 @@
 [![PyPI](https://img.shields.io/pypi/v/aiofluent-python.svg)](https://pypi.python.org/pypi/aiofluent-python)
 [![PyPI](https://img.shields.io/pypi/format/aiofluent-python.svg)](https://pypi.python.org/pypi/aiofluent-python)
 [![PyPI](https://img.shields.io/pypi/l/aiofluent-python.svg)](https://pypi.python.org/pypi/aiofluent-python)
+[![codecov](https://codecov.io/gh/guyingbo/aiofluent/branch/master/graph/badge.svg)](https://codecov.io/gh/guyingbo/aiofluent)
 
 
 A fluentd client libary intended to work with asyncio. Inspires by [fluent-logger-python](https://github.com/fluent/fluent-logger-python)
