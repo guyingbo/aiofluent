@@ -1,3 +1,4 @@
+import socket
 import asyncio
 import msgpack
 from aiofluent import FluentSender
@@ -8,18 +9,18 @@ def test_fluent():
     dic = {"name": "test"}
 
     async def go():
-        sender = FluentSender("tag", host=None)
+        server_sock, sock = socket.socketpair()
+        sender = FluentSender("tag", host=sock)
         await sender.emit("label", dic)
-        sender.server_sock.send(b"haha")
-        data = sender.server_sock.recv(1024)
+        server_sock.send(b"haha")
+        data = server_sock.recv(1024)
         label, timestamp, obj = msgpack.unpackb(data, encoding="utf-8")
         assert label == "tag.label"
         assert obj == dic
 
-        sender.server_sock.close()
         await asyncio.sleep(0.1)
         await sender.emit("label2", dic)
-        data = sender.server_sock.recv(1024)
+        data = server_sock.recv(1024)
         label, timestamp, obj = msgpack.unpackb(data, encoding="utf-8")
         assert label == "tag.label2"
         assert obj == dic
@@ -28,6 +29,14 @@ def test_fluent():
 
         sender = FluentSender("tag")
         await sender.emit("label", dic)
+        await sender.close()
+        await sender.emit("label2", dic)
+        await sender.close()
+
+        sender = FluentSender("tag", port=24225)
+        await sender.emit("label", dic)
+        await sender.close()
+        await sender.emit("label2", dic)
         await sender.close()
 
     loop.run_until_complete(go())

@@ -5,6 +5,7 @@ import msgpack
 import logging
 import asyncio
 import async_timeout
+from typing import Any
 
 __version__ = "0.2.4"
 logger = logging.getLogger(__name__)
@@ -22,13 +23,13 @@ class EventTime(msgpack.ExtType):
 class FluentSender(asyncio.Protocol):
     def __init__(
         self,
-        tag=None,
-        host="localhost",
-        port=24224,
-        bufmax=1 * 1024 * 1024,
-        timeout=5,
-        verbose=False,
-        nanosecond_precision=False,
+        tag: str = None,
+        host: str = "localhost",
+        port: int = 24224,
+        bufmax: int = 1 * 1024 * 1024,
+        timeout: int = 5,
+        verbose: bool = False,
+        nanosecond_precision: bool = False,
         loop=None,
     ):
         self.tag = tag
@@ -68,9 +69,8 @@ class FluentSender(asyncio.Protocol):
     async def _reconnect(self):
         async with self.lock:
             if self.transport is None:
-                if self.host is None:
-                    self.server_sock, sock = socket.socketpair()
-                    await self.loop.create_connection(lambda: self, sock=sock)
+                if isinstance(self.host, socket.socket):
+                    await self.loop.create_connection(lambda: self, sock=self.host)
                 elif self.host.startswith("unix://"):
                     await self.loop.create_unix_connection(lambda: self, self.host)
                 else:
@@ -78,7 +78,7 @@ class FluentSender(asyncio.Protocol):
                         lambda: self, self.host, self.port
                     )
 
-    async def _send(self, bytes_):
+    async def _send(self, bytes_: bytes) -> bool:
         try:
             async with async_timeout.timeout(self.timeout):
                 while True:
@@ -110,27 +110,27 @@ class FluentSender(asyncio.Protocol):
                 self.transport = None
             return False
 
-    def pack(self, label, data):
+    def pack(self, label: str, data: Any) -> bytes:
         if self.nanosecond_precision:
             cur_time = EventTime(time.time())
         else:
             cur_time = int(time.time())
         return self._bytes_emit_with_time(label, cur_time, data)
 
-    async def emit(self, label, data):
+    async def emit(self, label: str, data: Any) -> bool:
         if self.nanosecond_precision:
             cur_time = EventTime(time.time())
         else:
             cur_time = int(time.time())
         return await self.emit_with_time(label, cur_time, data)
 
-    async def emit_with_time(self, label, timestamp, data):
+    async def emit_with_time(self, label: str, timestamp: int, data: Any) -> bool:
         bytes_ = self._bytes_emit_with_time(label, timestamp, data)
         if bytes_:
             return await self._send(bytes_)
         return False
 
-    def _bytes_emit_with_time(self, label, timestamp, data):
+    def _bytes_emit_with_time(self, label: str, timestamp: int, data: Any) -> bytes:
         if (not self.tag) and (not label):
             raise ValueError("tag or label must be set")
         if self.tag and label:
@@ -151,7 +151,7 @@ class FluentSender(asyncio.Protocol):
             #     'traceback': traceback.format_exc()})
         return bytes_
 
-    def _make_packet(self, label, timestamp, data):
+    def _make_packet(self, label: str, timestamp: int, data: Any) -> bytes:
         packet = (label, timestamp, data)
         if self.verbose:
             print(packet)
