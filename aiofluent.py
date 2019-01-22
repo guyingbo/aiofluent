@@ -82,9 +82,14 @@ class FluentSender(asyncio.Protocol):
         try:
             async with async_timeout.timeout(self.timeout):
                 while True:
-                    if self.transport is None:
-                        await self._reconnect()
-                    await self.resume.wait()
+                    try:
+                        if self.transport is None:
+                            await self._reconnect()
+                        await self.resume.wait()
+                    except asyncio.CancelledError as e:
+                        self.last_error = e
+                        logger.exception("timeout cancelled")
+                        return False
                     if self.transport is None:
                         continue
                     self.transport.write(bytes_)
