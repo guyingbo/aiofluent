@@ -1,9 +1,13 @@
 language: python
+dist: xenial
+sudo: required
 python:
   - 3.5
   - 3.6
   - 3.7
 install:
+  - curl -L https://toolbelt.treasuredata.com/sh/install-ubuntu-xenial-td-agent2.5.sh | sh
+  - /etc/init.d/td-agent start
   - python setup.py install
   - pip install codecov
 script:
