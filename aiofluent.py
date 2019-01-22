@@ -5,7 +5,7 @@ import msgpack
 import logging
 import asyncio
 import async_timeout
-from typing import Any
+from typing import Any, Optional, Union
 
 __version__ = "0.2.4"
 logger = logging.getLogger(__name__)
@@ -23,12 +23,11 @@ class EventTime(msgpack.ExtType):
 class FluentSender(asyncio.Protocol):
     def __init__(
         self,
-        tag: str = None,
-        host: str = "localhost",
+        tag: Optional[str] = None,
+        host: Union[str, socket.socket] = "localhost",
         port: int = 24224,
         bufmax: int = 1 * 1024 * 1024,
         timeout: int = 5,
-        verbose: bool = False,
         nanosecond_precision: bool = False,
         loop=None,
     ):
@@ -37,7 +36,6 @@ class FluentSender(asyncio.Protocol):
         self.port = port
         self.bufmax = bufmax
         self.timeout = timeout
-        self.verbose = verbose
         self.nanosecond_precision = nanosecond_precision
         self.loop = loop or asyncio.get_event_loop()
         self.lock = asyncio.Lock()
@@ -145,14 +143,8 @@ class FluentSender(asyncio.Protocol):
             self.last_error = e
             logger.exception("make packet error")
             return b""
-            # bytes_ = self._make_packet(label, timestamp, {
-            #     'level': 'CRITICAL',
-            #     'message': "Can't output to log",
-            #     'traceback': traceback.format_exc()})
         return bytes_
 
     def _make_packet(self, label: str, timestamp: int, data: Any) -> bytes:
         packet = (label, timestamp, data)
-        if self.verbose:
-            print(packet)
         return self.packer.pack(packet)
