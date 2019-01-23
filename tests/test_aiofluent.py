@@ -10,7 +10,7 @@ dic = {"name": "test"}
 
 async def t1():
     server_sock, sock = socket.socketpair()
-    sender = FluentSender("tag", host=sock, bufmax=10, timeout=1)
+    sender = FluentSender("tag", host=sock, bufmax=100, timeout=1)
     await sender.emit("label", dic)
     server_sock.send(b"haha")
     data = server_sock.recv(1024)
@@ -27,8 +27,8 @@ async def t1():
     assert label == "tag.label2"
     assert obj == dic
 
-    for i in range(40):
-        r = await sender.emit("large", "long" * 100)
+    for i in range(30):
+        r = await sender.emit("large", "long" * 200)
         if not r:
             server_sock.recv(1024)
 
