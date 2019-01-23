@@ -7,7 +7,7 @@ import asyncio
 import async_timeout
 from typing import Any, Optional, Union
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 logger = logging.getLogger(__name__)
 
 
