@@ -43,6 +43,7 @@ class FluentSender(asyncio.Protocol):
         self.resume.set()
         self.transport = None
         self.packer = msgpack.Packer()
+        self.last_error = None
 
     def connection_made(self, transport):
         self.transport = transport
@@ -79,27 +80,23 @@ class FluentSender(asyncio.Protocol):
     async def _send(self, bytes_: bytes) -> bool:
         try:
             async with async_timeout.timeout(self.timeout):
-                while True:
-                    try:
+                try:
+                    while True:
                         if self.transport is None:
                             await self._reconnect()
                         await self.resume.wait()
-                    except asyncio.CancelledError as e:
-                        self.last_error = e
-                        logger.exception("timeout cancelled")
-                        return False
-                    if self.transport is None:
-                        continue
-                    self.transport.write(bytes_)
-                    return True
+                        if self.transport is None:
+                            continue
+                        self.transport.write(bytes_)
+                        return True
+                except asyncio.CancelledError as e:
+                    self.last_error = e
+                    logger.exception("timeout cancelled")
+                    return False
         except socket.error as e:
             self.last_error = e
             logger.exception("socket error")
             await self.close()
-            return False
-        except asyncio.TimeoutError as e:
-            self.last_error = e
-            logger.exception("timeout error")
             return False
         except Exception as e:
             self.last_error = e
@@ -122,13 +119,17 @@ class FluentSender(asyncio.Protocol):
             cur_time = int(time.time())
         return await self.emit_with_time(label, cur_time, data)
 
-    async def emit_with_time(self, label: str, timestamp: int, data: Any) -> bool:
+    async def emit_with_time(
+        self, label: str, timestamp: Union[int, float], data: Any
+    ) -> bool:
         bytes_ = self._bytes_emit_with_time(label, timestamp, data)
         if bytes_:
             return await self._send(bytes_)
         return False
 
-    def _bytes_emit_with_time(self, label: str, timestamp: int, data: Any) -> bytes:
+    def _bytes_emit_with_time(
+        self, label: str, timestamp: Union[int, float], data: Any
+    ) -> bytes:
         if (not self.tag) and (not label):
             raise ValueError("tag or label must be set")
         if self.tag and label:
