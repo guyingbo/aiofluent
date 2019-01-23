@@ -27,7 +27,7 @@ async def t1():
     assert label == "tag.label2"
     assert obj == dic
 
-    for i in range(25):
+    for i in range(40):
         r = await sender.emit("large", "long" * 100)
         if not r:
             server_sock.recv(1024)
