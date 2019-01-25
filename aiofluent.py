@@ -72,7 +72,8 @@ class FluentSender(asyncio.Protocol):
                     except asyncio.CancelledError as e:
                         self.last_error = e
                         logger.exception("close cancelled")
-                self.transport.close()
+                if self.transport:
+                    self.transport.close()
             self.transport = None
 
     async def _reconnect(self):
