@@ -36,15 +36,14 @@ async def test1():
 
 
 async def send(sender):
-    for i in range(20):
+    for i in range(2000):
         await sender.emit("label", dic)
-        await asyncio.sleep(0.001)
     await sender.close()
 
 
 @pytest.mark.asyncio
 async def test2(event_loop):
-    sender = FluentSender("tag", nanosecond_precision=True)
+    sender = FluentSender("tag", nanosecond_precision=True, bufmax=10)
     await sender.emit("label", dic)
     await sender.close()
     await sender.emit_with_time("label2", time.time(), dic)
