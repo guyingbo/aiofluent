@@ -43,7 +43,7 @@ async def send(sender):
 
 @pytest.mark.asyncio
 async def test2(event_loop):
-    sender = FluentSender("tag", nanosecond_precision=True, bufmax=10)
+    sender = FluentSender("tag", nanosecond_precision=True, bufmax=10, timeout=0.01)
     await sender.emit("label", dic)
     await sender.close()
     await sender.emit_with_time("label2", time.time(), dic)
@@ -54,6 +54,8 @@ async def test2(event_loop):
         task = event_loop.create_task(send(sender))
         tasks.append(task)
     await asyncio.gather(*tasks)
+    await sender.emit("label", "hello" * 1000000)
+    await sender.close()
 
 
 @pytest.mark.asyncio
