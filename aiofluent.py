@@ -64,7 +64,7 @@ class FluentSender(asyncio.Protocol):
             if self.transport and not self.transport.is_closing():
                 async with async_timeout.timeout(self.timeout):
                     try:
-                        while True:
+                        while self.transport:
                             size = self.transport.get_write_buffer_size()
                             if size == 0:
                                 break
