@@ -14,7 +14,7 @@ async def test1():
     sender = FluentSender("tag", host=sock, bufmax=10, timeout=1)
     await sender.emit("label", dic)
     data = server_sock.recv(1024)
-    label, timestamp, obj = msgpack.unpackb(data, encoding="utf-8")
+    label, timestamp, obj = msgpack.unpackb(data, raw=False)
     assert label == "tag.label"
     assert obj == dic
     assert sender.last_error is None
@@ -23,7 +23,7 @@ async def test1():
 
     await sender.emit("label2", dic)
     data = server_sock.recv(1024)
-    label, timestamp, obj = msgpack.unpackb(data, encoding="utf-8")
+    label, timestamp, obj = msgpack.unpackb(data, raw=False)
     assert label == "tag.label2"
     assert obj == dic
 
