@@ -54,7 +54,7 @@ async def test2(event_loop):
         task = event_loop.create_task(send(sender))
         tasks.append(task)
     await asyncio.gather(*tasks)
-    await sender.emit("label", "hello" * 1000000)
+    await sender.emit("label", "hello" * 100000)
     await sender.close()
 
 

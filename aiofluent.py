@@ -48,8 +48,11 @@ class FluentSender(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
         self.transport.set_write_buffer_limits(self.bufmax, min(16384, self.bufmax))
+        self.resume.set()
 
     def connection_lost(self, exc):
+        if self.transport:
+            self.transport.close()
         self.transport = None
         self.last_error = exc
 
