@@ -30,7 +30,7 @@ async def test1():
     for i in range(30):
         r = await sender.emit("large", "long" * 200)
         if not r:
-            server_sock.recv(1024)
+            server_sock.recv(256)
 
     await sender.close()
 

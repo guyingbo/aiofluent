@@ -66,8 +66,6 @@ class FluentSender(asyncio.Protocol):
                     try:
                         while True:
                             size = self.transport.get_write_buffer_size()
-                            import sys
-                            print(size, file=sys.stderr)
                             if size == 0:
                                 break
                             await asyncio.sleep(0.001)
@@ -93,12 +91,11 @@ class FluentSender(asyncio.Protocol):
         try:
             async with async_timeout.timeout(self.timeout):
                 try:
-                    while True:
-                        if self.transport is None:
-                            await self._reconnect()
-                        await self.resume.wait()
-                        self.transport.write(bytes_)
-                        return True
+                    if self.transport is None:
+                        await self._reconnect()
+                    await self.resume.wait()
+                    self.transport.write(bytes_)
+                    return True
                 except asyncio.CancelledError as e:
                     self.last_error = e
                     logger.exception("send cancelled")
