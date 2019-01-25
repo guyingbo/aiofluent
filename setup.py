@@ -43,5 +43,5 @@ setup(
         "Intended Audience :: Developers",
     ],
     setup_requires=["pytest-runner"],
-    tests_require=["pytest", "coverage", "pytest-cov"],
+    tests_require=["pytest", "coverage", "pytest-cov", "pytest-asyncio"],
 )

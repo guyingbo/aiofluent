@@ -26,7 +26,7 @@ class FluentSender(asyncio.Protocol):
         tag: Optional[str] = None,
         host: Union[str, socket.socket] = "localhost",
         port: int = 24224,
-        bufmax: int = 1 * 1024 * 1024,
+        bufmax: int = 256 * 1024,
         timeout: int = 5,
         nanosecond_precision: bool = False,
         loop=None,
@@ -47,7 +47,7 @@ class FluentSender(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.transport = transport
-        self.transport.set_write_buffer_limits(self.bufmax, self.bufmax)
+        self.transport.set_write_buffer_limits(self.bufmax, min(16384, self.bufmax))
 
     def connection_lost(self, exc):
         self.transport = None
@@ -62,12 +62,24 @@ class FluentSender(asyncio.Protocol):
     async def close(self):
         async with self.lock:
             if self.transport and not self.transport.is_closing():
+                async with async_timeout.timeout(self.timeout):
+                    try:
+                        while True:
+                            size = self.transport.get_write_buffer_size()
+                            import sys
+                            print(size, file=sys.stderr)
+                            if size == 0:
+                                break
+                            await asyncio.sleep(0.001)
+                    except asyncio.CancelledError as e:
+                        self.last_error = e
+                        logger.exception("close cancelled")
                 self.transport.close()
             self.transport = None
 
     async def _reconnect(self):
         async with self.lock:
-            if self.transport is None:
+            if self.transport is None or self.transport.is_closing():
                 if isinstance(self.host, socket.socket):
                     await self.loop.create_connection(lambda: self, sock=self.host)
                 elif self.host.startswith("unix://"):
@@ -85,24 +97,15 @@ class FluentSender(asyncio.Protocol):
                         if self.transport is None:
                             await self._reconnect()
                         await self.resume.wait()
-                        if self.transport is None:
-                            continue
                         self.transport.write(bytes_)
                         return True
                 except asyncio.CancelledError as e:
                     self.last_error = e
-                    logger.exception("timeout cancelled")
+                    logger.exception("send cancelled")
                     return False
-        except socket.error as e:
-            self.last_error = e
-            logger.exception("socket error")
-            await self.close()
-            return False
         except Exception as e:
             self.last_error = e
             logger.exception(str(e))
-            if self.transport and self.transport.is_closing():
-                self.transport = None
             return False
 
     def pack(self, label: str, data: Any) -> bytes:
