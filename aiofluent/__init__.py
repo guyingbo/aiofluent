@@ -27,7 +27,7 @@ class FluentSender(asyncio.Protocol):
         port: int = 24224,
         bufmax: int = 256 * 1024,
         timeout: int = 5,
-        nanosecond_precision: bool = False,
+        nanosecond_precision: bool = False
     ):
         self.host = host
         self.port = port

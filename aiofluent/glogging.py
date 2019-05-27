@@ -23,7 +23,7 @@ class HttpRequest:
         cacheHit: Optional[bool] = None,
         cacheValidatedWithOriginServer: Optional[bool] = None,
         cacheFillBytes: Optional[str] = None,
-        protocol: Optional[str] = None,
+        protocol: Optional[str] = None
     ):
         for k, v in locals().items():
             if k != "self" and v is not None:
@@ -59,7 +59,7 @@ class GLoggingFluentSender(FluentSender):
         message: str,
         severity: Optional[LogSeverity] = None,
         http_request: Optional[HttpRequest] = None,
-        **kwargs,
+        **kwargs
     ):
         data = {}
         data["message"] = message
