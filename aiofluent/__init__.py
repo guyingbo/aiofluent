@@ -7,7 +7,7 @@ import asyncio
 import async_timeout
 from typing import Any, Union
 
-__version__ = "0.2.7"
+__version__ = "0.2.8"
 logger = logging.getLogger(__name__)
 
 
@@ -28,14 +28,12 @@ class FluentSender(asyncio.Protocol):
         bufmax: int = 256 * 1024,
         timeout: int = 5,
         nanosecond_precision: bool = False,
-        loop=None,
     ):
         self.host = host
         self.port = port
         self.bufmax = bufmax
         self.timeout = timeout
         self.nanosecond_precision = nanosecond_precision
-        self.loop = loop or asyncio.get_event_loop()
         self.lock = asyncio.Lock()
         self.resume = asyncio.Event()
         self.resume.set()
@@ -80,14 +78,13 @@ class FluentSender(asyncio.Protocol):
     async def _reconnect(self):
         async with self.lock:
             if self.transport is None or self.transport.is_closing():
+                loop = asyncio.get_event_loop()
                 if isinstance(self.host, socket.socket):
-                    await self.loop.create_connection(lambda: self, sock=self.host)
+                    await loop.create_connection(lambda: self, sock=self.host)
                 elif self.host.startswith("unix://"):
-                    await self.loop.create_unix_connection(lambda: self, self.host)
+                    await loop.create_unix_connection(lambda: self, self.host)
                 else:
-                    await self.loop.create_connection(
-                        lambda: self, self.host, self.port
-                    )
+                    await loop.create_connection(lambda: self, self.host, self.port)
 
     async def _send(self, bytes_: bytes) -> bool:
         try:

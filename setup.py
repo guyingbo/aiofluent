@@ -9,7 +9,7 @@ VERSION_RE = re.compile(r"""__version__ = ['"]([0-9.]+)['"]""")
 BASE_PATH = os.path.dirname(__file__)
 
 
-with open(os.path.join(BASE_PATH, "aiofluent.py")) as f:
+with open(os.path.join(BASE_PATH, "aiofluent", "__init__.py")) as f:
     try:
         version = VERSION_RE.search(f.read()).group(1)
     except IndexError:
@@ -32,7 +32,7 @@ setup(
     maintainer="Yingbo Gu",
     maintainer_email="tensiongyb@gmail.com",
     url="https://github.com/guyingbo/aiofluent",
-    py_modules=["aiofluent"],
+    packages=["aiofluent"],
     python_requires=">=3.5",
     install_requires=["msgpack>=0.5.2", "async_timeout>=2.0.0"],
     classifiers=[
