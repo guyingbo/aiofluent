@@ -28,11 +28,11 @@ pip install aiofluent-python
 import asyncio
 from aiofluent import FluentSender
 loop = asyncio.get_event_loop()
-sender = FluentSender('tag')
+sender = FluentSender()
 
 
 async def go():
-    await sender.emit('label', {'name': 'aiofluent'})
+    await sender.emit('tag', {'name': 'aiofluent'})
     await sender.close()
 
 
