@@ -11,20 +11,20 @@ dic = {"name": "test"}
 @pytest.mark.asyncio
 async def test1():
     server_sock, sock = socket.socketpair()
-    sender = FluentSender("tag", host=sock, bufmax=10, timeout=1)
+    sender = FluentSender(host=sock, bufmax=10, timeout=1)
     await sender.emit("label", dic)
     data = server_sock.recv(1024)
     label, timestamp, obj = msgpack.unpackb(data, raw=False)
-    assert label == "tag.label"
+    assert label == "label"
     assert obj == dic
     assert sender.last_error is None
-    await sender.emit(None, object())
+    await sender.emit("label", object())
     assert str(sender.last_error) is not None
 
     await sender.emit("label2", dic)
     data = server_sock.recv(1024)
     label, timestamp, obj = msgpack.unpackb(data, raw=False)
-    assert label == "tag.label2"
+    assert label == "label2"
     assert obj == dic
 
     for i in range(30):
@@ -43,7 +43,7 @@ async def send(sender):
 
 @pytest.mark.asyncio
 async def test2(event_loop):
-    sender = FluentSender("tag", nanosecond_precision=True, bufmax=10, timeout=0.01)
+    sender = FluentSender(nanosecond_precision=True, bufmax=10, timeout=0.01)
     await sender.emit("label", dic)
     await sender.close()
     await sender.emit_with_time("label2", time.time(), dic)
@@ -60,7 +60,7 @@ async def test2(event_loop):
 
 @pytest.mark.asyncio
 async def test3():
-    sender = FluentSender("tag", host="unix:///tmp/a.sock")
+    sender = FluentSender(host="unix:///tmp/a.sock")
     r = await sender.emit("label", dic)
     assert not r
     await sender.close()
