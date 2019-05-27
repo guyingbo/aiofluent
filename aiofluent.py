@@ -5,9 +5,9 @@ import msgpack
 import logging
 import asyncio
 import async_timeout
-from typing import Any, Optional, Union
+from typing import Any, Union
 
-__version__ = "0.2.6"
+__version__ = "0.2.7"
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +23,6 @@ class EventTime(msgpack.ExtType):
 class FluentSender(asyncio.Protocol):
     def __init__(
         self,
-        tag: Optional[str] = None,
         host: Union[str, socket.socket] = "localhost",
         port: int = 24224,
         bufmax: int = 256 * 1024,
@@ -31,7 +30,6 @@ class FluentSender(asyncio.Protocol):
         nanosecond_precision: bool = False,
         loop=None,
     ):
-        self.tag = tag
         self.host = host
         self.port = port
         self.bufmax = bufmax
@@ -109,47 +107,43 @@ class FluentSender(asyncio.Protocol):
             logger.exception(str(e))
             return False
 
-    def pack(self, label: str, data: Any) -> bytes:
+    def pack(self, tag: str, data: Any) -> bytes:
         if self.nanosecond_precision:
             cur_time = EventTime(time.time())
         else:
             cur_time = int(time.time())
-        return self._bytes_emit_with_time(label, cur_time, data)
+        return self._bytes_emit_with_time(tag, cur_time, data)
 
-    async def emit(self, label: str, data: Any) -> bool:
+    async def emit(self, tag: str, data: Any) -> bool:
         if self.nanosecond_precision:
             cur_time = EventTime(time.time())
         else:
             cur_time = int(time.time())
-        return await self.emit_with_time(label, cur_time, data)
+        return await self.emit_with_time(tag, cur_time, data)
 
     async def emit_with_time(
-        self, label: str, timestamp: Union[int, float], data: Any
+        self, tag: str, timestamp: Union[int, float], data: Any
     ) -> bool:
-        bytes_ = self._bytes_emit_with_time(label, timestamp, data)
+        bytes_ = self._bytes_emit_with_time(tag, timestamp, data)
         if bytes_:
             return await self._send(bytes_)
         return False
 
     def _bytes_emit_with_time(
-        self, label: str, timestamp: Union[int, float], data: Any
+        self, tag: str, timestamp: Union[int, float], data: Any
     ) -> bytes:
-        if (not self.tag) and (not label):
-            raise ValueError("tag or label must be set")
-        if self.tag and label:
-            label = self.tag + "." + label
-        elif self.tag:
-            label = self.tag
+        if not tag:
+            raise ValueError("tag must be set")
         if self.nanosecond_precision and isinstance(timestamp, float):
             timestamp = EventTime(timestamp)
         try:
-            bytes_ = self._make_packet(label, timestamp, data)
+            bytes_ = self._make_packet(tag, timestamp, data)
         except Exception as e:
             self.last_error = e
             logger.exception("make packet error")
             return b""
         return bytes_
 
-    def _make_packet(self, label: str, timestamp: int, data: Any) -> bytes:
-        packet = (label, timestamp, data)
+    def _make_packet(self, tag: str, timestamp: int, data: Any) -> bytes:
+        packet = (tag, timestamp, data)
         return self.packer.pack(packet)
