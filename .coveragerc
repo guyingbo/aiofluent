@@ -3,5 +3,5 @@ source = aiofluent
 
 [report]
 include =
-    aiofluent.py
+    aiofluent/*.py
     tests/*.py
