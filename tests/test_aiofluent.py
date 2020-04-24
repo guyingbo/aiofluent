@@ -1,8 +1,10 @@
-import time
-import socket
-import pytest
-import msgpack
 import asyncio
+import socket
+import time
+
+import msgpack
+import pytest
+
 from aiofluent import FluentSender
 
 dic = {"name": "test"}

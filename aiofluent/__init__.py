@@ -1,11 +1,12 @@
-import time
+import asyncio
+import logging
 import socket
 import struct
-import msgpack
-import logging
-import asyncio
-import async_timeout
+import time
 from typing import Any, Union
+
+import async_timeout
+import msgpack
 
 __version__ = "0.2.8"
 logger = logging.getLogger(__name__)
