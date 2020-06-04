@@ -40,7 +40,7 @@ class FluentSender(asyncio.Protocol):
         self.resume.set()
         self.transport = None  # type: Optional[asyncio.Transport]
         self.packer = msgpack.Packer()
-        self.last_error: Optional[Exception] = None
+        self.last_error = None  # type: Optional[Exception]
 
     def connection_made(self, transport) -> None:
         self.transport = transport
