@@ -22,7 +22,7 @@ with open(os.path.join(BASE_PATH, "README.md")) as readme:
 
 setup(
     name="aiofluent-python",
-    description="A fluentd client libary intended to work with asyncio.",
+    description="asynchronous fluentd client libary",
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="MIT",

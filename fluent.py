@@ -1,9 +1,9 @@
-# Warning: this module has been deprecated, please use the latest aiofluent.
-import time
-import struct
-import socket
-import traceback
 import asyncio
+import socket
+import struct
+import time
+import traceback
+
 import msgpack
 
 __version__ = "0.1.0"

@@ -1,5 +1,5 @@
 import pytest
-from aiofluent.glogging import HttpRequest, LogSeverity, GLoggingFluentSender
+from aiofluent.glogging import GLoggingFluentSender, HttpRequest, LogSeverity
 
 
 @pytest.mark.asyncio

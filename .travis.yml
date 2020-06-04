@@ -5,6 +5,7 @@ python:
   - 3.5
   - 3.6
   - 3.7
+  - 3.8
 install:
   - curl -L https://toolbelt.treasuredata.com/sh/install-ubuntu-xenial-td-agent2.5.sh | sh
   - sudo /etc/init.d/td-agent start

@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/guyingbo/aiofluent/branch/master/graph/badge.svg)](https://codecov.io/gh/guyingbo/aiofluent)
 
 
-A fluentd client libary intended to work with asyncio. Inspires by [fluent-logger-python](https://github.com/fluent/fluent-logger-python)
+An asynchronous fluentd client libary. Inspired by [fluent-logger-python](https://github.com/fluent/fluent-logger-python)
 
 ## Requirements
 
@@ -27,7 +27,6 @@ pip install aiofluent-python
 ~~~python
 import asyncio
 from aiofluent import FluentSender
-loop = asyncio.get_event_loop()
 sender = FluentSender()
 
 
@@ -36,7 +35,5 @@ async def go():
     await sender.close()
 
 
-loop.run_until_complete(go())
-loop.run_until_complete(loop.shutdown_asyncgens())
-loop.close()
+asyncio.run(go())
 ~~~

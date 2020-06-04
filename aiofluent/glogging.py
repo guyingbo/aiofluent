@@ -2,6 +2,7 @@
 import enum
 import traceback
 from typing import Optional
+
 from . import FluentSender
 
 

@@ -4,7 +4,6 @@ import time
 
 import msgpack
 import pytest
-
 from aiofluent import FluentSender
 
 dic = {"name": "test"}
