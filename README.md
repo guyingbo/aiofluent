@@ -13,7 +13,7 @@ An asynchronous fluentd client libary. Inspired by [fluent-logger-python](https:
 ## Requirements
 
 - Python 3.5 or greater
-- msgpack-python
+- msgpack
 - async-timeout
 
 ## Installation
