@@ -1,6 +1,6 @@
 # aiofluent
 
-[![Build Status](https://travis-ci.org/guyingbo/aiofluent.svg?branch=master)](https://travis-ci.org/guyingbo/aiofluent)
+![Python package](https://github.com/guyingbo/aiofluent/workflows/Python%20package/badge.svg)
 [![PyPI](https://img.shields.io/pypi/pyversions/aiofluent-python.svg)](https://pypi.python.org/pypi/aiofluent-python)
 [![PyPI](https://img.shields.io/pypi/v/aiofluent-python.svg)](https://pypi.python.org/pypi/aiofluent-python)
 [![PyPI](https://img.shields.io/pypi/format/aiofluent-python.svg)](https://pypi.python.org/pypi/aiofluent-python)

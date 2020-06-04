@@ -3,10 +3,10 @@ import logging
 import socket
 import struct
 import time
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 import async_timeout
-import msgpack
+import msgpack  # type: ignore
 
 __version__ = "0.2.8"
 logger = logging.getLogger(__name__)
@@ -38,16 +38,16 @@ class FluentSender(asyncio.Protocol):
         self.lock = asyncio.Lock()
         self.resume = asyncio.Event()
         self.resume.set()
-        self.transport = None
+        self.transport: Optional[asyncio.Transport] = None
         self.packer = msgpack.Packer()
-        self.last_error = None
+        self.last_error: Optional[Exception] = None
 
-    def connection_made(self, transport):
+    def connection_made(self, transport) -> None:
         self.transport = transport
-        self.transport.set_write_buffer_limits(self.bufmax, min(16384, self.bufmax))
+        transport.set_write_buffer_limits(self.bufmax, min(16384, self.bufmax))
         self.resume.set()
 
-    def connection_lost(self, exc):
+    def connection_lost(self, exc: Optional[Exception]):
         if self.transport:
             self.transport.close()
         self.transport = None
@@ -93,6 +93,7 @@ class FluentSender(asyncio.Protocol):
                 try:
                     if self.transport is None:
                         await self._reconnect()
+                    assert self.transport is not None, "connection lost"
                     await self.resume.wait()
                     self.transport.write(bytes_)
                     return True
@@ -106,18 +107,10 @@ class FluentSender(asyncio.Protocol):
             return False
 
     def pack(self, tag: str, data: Any) -> bytes:
-        if self.nanosecond_precision:
-            cur_time = EventTime(time.time())
-        else:
-            cur_time = int(time.time())
-        return self._bytes_emit_with_time(tag, cur_time, data)
+        return self._bytes_emit_with_time(tag, time.time(), data)
 
     async def emit(self, tag: str, data: Any) -> bool:
-        if self.nanosecond_precision:
-            cur_time = EventTime(time.time())
-        else:
-            cur_time = int(time.time())
-        return await self.emit_with_time(tag, cur_time, data)
+        return await self.emit_with_time(tag, time.time(), data)
 
     async def emit_with_time(
         self, tag: str, timestamp: Union[int, float], data: Any
@@ -134,6 +127,8 @@ class FluentSender(asyncio.Protocol):
             raise ValueError("tag must be set")
         if self.nanosecond_precision and isinstance(timestamp, float):
             timestamp = EventTime(timestamp)
+        else:
+            timestamp = int(timestamp)
         try:
             bytes_ = self._make_packet(tag, timestamp, data)
         except Exception as e:
@@ -142,6 +137,8 @@ class FluentSender(asyncio.Protocol):
             return b""
         return bytes_
 
-    def _make_packet(self, tag: str, timestamp: int, data: Any) -> bytes:
+    def _make_packet(
+        self, tag: str, timestamp: Union[int, EventTime], data: Any
+    ) -> bytes:
         packet = (tag, timestamp, data)
         return self.packer.pack(packet)
