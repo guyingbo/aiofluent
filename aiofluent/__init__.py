@@ -12,13 +12,10 @@ __version__ = "0.2.9"
 logger = logging.getLogger(__name__)
 
 
-class EventTime(msgpack.ExtType):
-    def __new__(cls, timestamp):
-        seconds = int(timestamp)
-        nanoseconds = int(timestamp % 1 * 10 ** 9)
-        return super().__new__(
-            cls, code=0, data=struct.pack(">II", seconds, nanoseconds)
-        )
+def _nano_time(timestamp: Union[int, float]) -> msgpack.ExtType:
+    seconds = int(timestamp)
+    nanoseconds = int((timestamp % 1) * (10 ** 9))
+    return msgpack.ExtType(code=0, data=struct.pack(">II", seconds, nanoseconds))
 
 
 class FluentSender(asyncio.Protocol):
@@ -126,7 +123,7 @@ class FluentSender(asyncio.Protocol):
         if not tag:
             raise ValueError("tag must be set")
         if self.nanosecond_precision and isinstance(timestamp, float):
-            timestamp = EventTime(timestamp)
+            timestamp = _nano_time(timestamp)
         else:
             timestamp = int(timestamp)
         try:
@@ -138,7 +135,7 @@ class FluentSender(asyncio.Protocol):
         return bytes_
 
     def _make_packet(
-        self, tag: str, timestamp: Union[int, EventTime], data: Any
+        self, tag: str, timestamp: Union[int, msgpack.ExtType], data: Any
     ) -> bytes:
         packet = (tag, timestamp, data)
         return self.packer.pack(packet)
