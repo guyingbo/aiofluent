@@ -3,12 +3,12 @@ import logging
 import socket
 import struct
 import time
-from typing import Any, Union, Optional
+from typing import Any, Optional, Union
 
 import async_timeout
 import msgpack  # type: ignore
 
-__version__ = "0.2.8"
+__version__ = "0.2.9"
 logger = logging.getLogger(__name__)
 
 
@@ -38,7 +38,7 @@ class FluentSender(asyncio.Protocol):
         self.lock = asyncio.Lock()
         self.resume = asyncio.Event()
         self.resume.set()
-        self.transport: Optional[asyncio.Transport] = None
+        self.transport = None  # type: Optional[asyncio.Transport]
         self.packer = msgpack.Packer()
         self.last_error: Optional[Exception] = None
 

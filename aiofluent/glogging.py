@@ -1,7 +1,7 @@
 """Google Cloud Platform Logging Utility"""
 import enum
 import traceback
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from . import FluentSender
 
@@ -62,7 +62,7 @@ class GLoggingFluentSender(FluentSender):
         http_request: Optional[HttpRequest] = None,
         **kwargs
     ):
-        data: Dict[str, Any] = {}
+        data = {}  # type: Dict[str, Any]
         data["message"] = message
         if severity is not None:
             data["severity"] = severity.value
