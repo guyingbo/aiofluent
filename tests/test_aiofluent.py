@@ -18,9 +18,8 @@ async def test1():
     tag, timestamp, obj = msgpack.unpackb(data, raw=False)
     assert tag == "tag"
     assert obj == dic
-    assert sender.last_error is None
-    await sender.emit("tag", object())
-    assert str(sender.last_error) is not None
+    with pytest.raises(TypeError):
+        await sender.emit("tag", object())
 
     await sender.emit("tag2", dic)
     data = server_sock.recv(1024)

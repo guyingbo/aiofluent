@@ -3,7 +3,7 @@ import logging
 import socket
 import struct
 import time
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import async_timeout
 import msgpack  # type: ignore
@@ -23,9 +23,13 @@ class FluentSender(asyncio.Protocol):
         self,
         host: Union[str, socket.socket] = "localhost",
         port: int = 24224,
+        *,
         bufmax: int = 256 * 1024,
         timeout: int = 5,
         nanosecond_precision: bool = False,
+        error_callback: Optional[
+            Callable[[Exception], Any]
+        ] = lambda e: logger.exception(str(e)),
     ):
         self.host = host
         self.port = port
@@ -37,7 +41,7 @@ class FluentSender(asyncio.Protocol):
         self.resume.set()
         self.transport = None  # type: Optional[asyncio.Transport]
         self.packer = msgpack.Packer()
-        self.last_error = None  # type: Optional[Exception]
+        self.error_callback = error_callback
 
     def connection_made(self, transport) -> None:
         self.transport = transport
@@ -48,7 +52,8 @@ class FluentSender(asyncio.Protocol):
         if self.transport:
             self.transport.close()
         self.transport = None
-        self.last_error = exc
+        if self.error_callback and exc:
+            self.error_callback(exc)
 
     def pause_writing(self):
         self.resume.clear()
@@ -59,16 +64,16 @@ class FluentSender(asyncio.Protocol):
     async def close(self):
         async with self.lock:
             if self.transport and not self.transport.is_closing():
-                async with async_timeout.timeout(self.timeout):
-                    try:
+                try:
+                    async with async_timeout.timeout(self.timeout):
                         while self.transport:
                             size = self.transport.get_write_buffer_size()
                             if size == 0:
                                 break
                             await asyncio.sleep(0.001)
-                    except asyncio.CancelledError as e:
-                        self.last_error = e
-                        logger.exception("close cancelled")
+                except asyncio.TimeoutError as e:
+                    if self.error_callback:
+                        self.error_callback(e)
                 if self.transport:
                     self.transport.close()
             self.transport = None
@@ -87,20 +92,15 @@ class FluentSender(asyncio.Protocol):
     async def _send(self, bytes_: bytes) -> bool:
         try:
             async with async_timeout.timeout(self.timeout):
-                try:
-                    if self.transport is None:
-                        await self._reconnect()
-                    assert self.transport is not None, "connection lost"
-                    await self.resume.wait()
-                    self.transport.write(bytes_)
-                    return True
-                except asyncio.CancelledError as e:
-                    self.last_error = e
-                    logger.exception("send cancelled")
-                    return False
+                if self.transport is None:
+                    await self._reconnect()
+                assert self.transport is not None, "connection lost"
+                await self.resume.wait()
+                self.transport.write(bytes_)
+                return True
         except Exception as e:
-            self.last_error = e
-            logger.exception(str(e))
+            if self.error_callback:
+                self.error_callback(e)
             return False
 
     def pack(self, tag: str, data: Any) -> bytes:
@@ -126,10 +126,4 @@ class FluentSender(asyncio.Protocol):
             timestamp = _nano_time(timestamp)
         else:
             timestamp = int(timestamp)
-        try:
-            bytes_ = self.packer.pack((tag, timestamp, data))
-        except Exception as e:
-            self.last_error = e
-            logger.exception("make packet error")
-            return b""
-        return bytes_
+        return self.packer.pack((tag, timestamp, data))
