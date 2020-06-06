@@ -23,7 +23,6 @@ class FluentSender(asyncio.Protocol):
         self,
         host: Union[str, socket.socket] = "localhost",
         port: int = 24224,
-        *,
         bufmax: int = 256 * 1024,
         timeout: int = 5,
         nanosecond_precision: bool = False,

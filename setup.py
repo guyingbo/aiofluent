@@ -33,10 +33,12 @@ setup(
     maintainer_email="tensiongyb@gmail.com",
     url="https://github.com/guyingbo/aiofluent",
     packages=["aiofluent"],
-    python_requires=">=3.5",
+    python_requires=">=3.5.3",
     install_requires=["msgpack>=0.5.2", "async_timeout>=2.0.0"],
     classifiers=[
         "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
