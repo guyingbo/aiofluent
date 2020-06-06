@@ -27,10 +27,10 @@ pip install aiofluent-python
 ~~~python
 import asyncio
 from aiofluent import FluentSender
-sender = FluentSender()
 
 
 async def go():
+    sender = FluentSender()
     await sender.emit('tag', {'name': 'aiofluent'})
     await sender.close()
 
