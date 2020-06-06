@@ -122,20 +122,14 @@ class FluentSender(asyncio.Protocol):
     ) -> bytes:
         if not tag:
             raise ValueError("tag must be set")
-        if self.nanosecond_precision and isinstance(timestamp, float):
+        if self.nanosecond_precision:
             timestamp = _nano_time(timestamp)
         else:
             timestamp = int(timestamp)
         try:
-            bytes_ = self._make_packet(tag, timestamp, data)
+            bytes_ = self.packer.pack((tag, timestamp, data))
         except Exception as e:
             self.last_error = e
             logger.exception("make packet error")
             return b""
         return bytes_
-
-    def _make_packet(
-        self, tag: str, timestamp: Union[int, msgpack.ExtType], data: Any
-    ) -> bytes:
-        packet = (tag, timestamp, data)
-        return self.packer.pack(packet)
